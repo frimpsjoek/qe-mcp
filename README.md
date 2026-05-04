@@ -76,6 +76,76 @@ Most harnesses use the same fields with slightly different wrappers:
 - Cline/Roo Code use a server object in their MCP settings.
 - Codex or other harnesses can launch the same stdio command directly.
 
+### Codex CLI / Codex App
+
+Add a local Docker-backed QE-MCP server:
+
+```bash
+codex mcp add quantum-espresso \
+  --env QE_RUNNER=docker \
+  --env QE_USE_DOCKER=true \
+  --env QE_DOCKER_IMAGE=qe-local \
+  --env QE_PSEUDO_DIR=/absolute/path/to/qe-mcp/pseudopotentials/sg15_oncv \
+  --env QE_WORKDIR=/absolute/path/to/qe-mcp/qe_calculations \
+  -- uv --directory /absolute/path/to/qe-mcp run qe-mcp
+```
+
+Add a Polaris/Globus-backed QE-MCP server:
+
+```bash
+codex mcp add quantum-espresso \
+  --env QE_RUNNER=globus \
+  --env QE_GLOBUS_ENDPOINT=<your-polaris-compute-endpoint-uuid> \
+  --env QE_GLOBUS_FUNCTION=<registered-worker-function-uuid> \
+  --env QE_POLARIS_SCRATCH=~/.qe_mcp_scratch \
+  --env QE_POLARIS_PSEUDO=/home/<you>/sg15_oncv \
+  --env QE_PSEUDO_DIR=/absolute/path/to/qe-mcp/pseudopotentials/sg15_oncv \
+  --env QE_WORKDIR=/absolute/path/to/qe-mcp/qe_calculations \
+  -- uv --directory /absolute/path/to/qe-mcp run qe-mcp
+```
+
+Check the installed server:
+
+```bash
+codex mcp list
+codex mcp get quantum-espresso
+```
+
+### Claude Code
+
+Add a local Docker-backed QE-MCP server:
+
+```bash
+claude mcp add \
+  -e QE_RUNNER=docker \
+  -e QE_USE_DOCKER=true \
+  -e QE_DOCKER_IMAGE=qe-local \
+  -e QE_PSEUDO_DIR=/absolute/path/to/qe-mcp/pseudopotentials/sg15_oncv \
+  -e QE_WORKDIR=/absolute/path/to/qe-mcp/qe_calculations \
+  quantum-espresso -- uv --directory /absolute/path/to/qe-mcp run qe-mcp
+```
+
+Add a Polaris/Globus-backed QE-MCP server:
+
+```bash
+claude mcp add \
+  -e QE_RUNNER=globus \
+  -e QE_GLOBUS_ENDPOINT=<your-polaris-compute-endpoint-uuid> \
+  -e QE_GLOBUS_FUNCTION=<registered-worker-function-uuid> \
+  -e QE_POLARIS_SCRATCH=~/.qe_mcp_scratch \
+  -e QE_POLARIS_PSEUDO=/home/<you>/sg15_oncv \
+  -e QE_PSEUDO_DIR=/absolute/path/to/qe-mcp/pseudopotentials/sg15_oncv \
+  -e QE_WORKDIR=/absolute/path/to/qe-mcp/qe_calculations \
+  quantum-espresso -- uv --directory /absolute/path/to/qe-mcp run qe-mcp
+```
+
+Check the installed server:
+
+```bash
+claude mcp list
+claude mcp get quantum-espresso
+```
+
 For Docker-backed local runs, build the image first:
 
 ```bash
