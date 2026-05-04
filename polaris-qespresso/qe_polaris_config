@@ -5,7 +5,7 @@ engine:
 
   provider:
     type: PBSProProvider
-    account: LitMinMatSci
+    account: <your_polaris_allocation>
     queue: debug
     walltime: "00:30:00"
     nodes_per_block: 1

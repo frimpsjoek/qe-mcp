@@ -82,31 +82,9 @@ def qe_run_scf(
     runner: str | None = None,
 ) -> dict:
     """
-    Run a self-consistent field (SCF) DFT calculation.
-
-    Computes ground-state electron density and total energy.
-    
-    ALL PARAMETERS EXCEPT 'structure' ARE OPTIONAL AND AUTO-DETECTED.
-
-    Args:
-        structure: Atomic structure - formula ("Si", "Fe", "GaAs"), file path, or CIF/POSCAR string
-        kpoints: K-point grid. Options: "auto" (default), "gamma", "8,8,8", or "12" for 12x12x12
-        ecutwfc: Plane-wave cutoff in Ry (auto-detected from pseudopotentials if not set)
-        conv_thr: SCF convergence threshold (default: 1e-6 Ry). Use 1e-8 for high accuracy.
-        degauss: Smearing width in Ry (default: 0.02). Smaller for semiconductors, larger for metals.
-        mixing_beta: Charge mixing parameter (default: 0.7). Reduce to 0.3-0.4 for difficult convergence.
-        spin_polarized: Enable spin polarization (auto-enabled for Fe, Co, Ni, Mn, Cr)
-        runner: Compute backend. "polaris" or "globus" for Polaris HPC, "docker" for local Docker.
-                Defaults to QE_RUNNER environment variable.
-
-    Returns:
-        Dictionary with total_energy_eV, fermi_energy_eV, forces, convergence status
-
-    Examples:
-        qe_run_scf(structure="Si")                        # All auto
-        qe_run_scf(structure="Fe")                        # Auto spin-polarized
-        qe_run_scf(structure="Cu", runner="polaris")      # Submit to Polaris
-        qe_run_scf(structure="Cu", conv_thr=1e-8)         # High accuracy
+    Run an SCF calculation and return energy, Fermi level, forces, and status.
+    Only structure is required; kpoints accepts "auto", "gamma", "8,8,8", or "12".
+    runner may be "docker", "local", "globus", or "polaris".
     """
     return run_scf(
         structure=structure,
@@ -134,28 +112,9 @@ def qe_run_relax(
     runner: str | None = None,
 ) -> dict:
     """
-    Optimize atomic positions (fixed cell relaxation).
-
-    Relaxes atomic positions to minimize forces while keeping the unit cell fixed.
-    
-    ALL PARAMETERS EXCEPT 'structure' ARE OPTIONAL.
-
-    Args:
-        structure: Atomic structure - formula ("Si", "H2O"), file path, or CIF/POSCAR string
-        kpoints: K-point grid. Options: "auto" (default), "gamma", "8,8,8"
-        ecutwfc: Plane-wave cutoff in Ry (auto-detected if not set)
-        nstep: Maximum relaxation steps (default: 100). Increase for complex structures.
-        forc_conv_thr: Force convergence threshold in Ry/Bohr (default: 1e-3). Use 1e-4 for high accuracy.
-        spin_polarized: Enable spin polarization (auto-enabled for Fe, Co, Ni, Mn, Cr)
-        runner: Compute backend. "polaris" or "globus" for Polaris HPC, "docker" for local Docker.
-
-    Returns:
-        Dictionary with relaxed energy, forces, convergence status
-    
-    Examples:
-        qe_run_relax(structure="H2O")  # Relax water molecule
-        qe_run_relax(structure="Si", forc_conv_thr=1e-4)  # Tight convergence
-        qe_run_relax(structure="complex_molecule", nstep=200)  # More steps
+    Relax atomic positions with a fixed cell.
+    Only structure is required; optional cutoff, force threshold, steps, spin,
+    kpoints, and runner override the automatic defaults.
     """
     return run_relax(
         structure=structure,
@@ -186,29 +145,9 @@ def qe_run_vc_relax(
     runner: str | None = None,
 ) -> dict:
     """
-    Variable-cell relaxation (optimize positions AND cell).
-
-    Optimizes atomic positions and unit cell parameters simultaneously.
-    Useful for finding equilibrium lattice constants.
-    
-    ALL PARAMETERS EXCEPT 'structure' ARE OPTIONAL.
-
-    Args:
-        structure: Atomic structure - formula ("Cu", "Au"), file path, or CIF/POSCAR string
-        kpoints: K-point grid. Options: "auto" (default), "gamma", "8,8,8"
-        ecutwfc: Plane-wave cutoff in Ry (auto-detected if not set)
-        nstep: Maximum relaxation steps (default: 100). Increase for complex structures.
-        forc_conv_thr: Force convergence threshold in Ry/Bohr (default: 1e-3).
-        press_conv_thr: Pressure convergence threshold in kbar (default: 0.5).
-        spin_polarized: Enable spin polarization (auto-enabled for Fe, Co, Ni, Mn, Cr)
-        runner: Compute backend. "polaris" or "globus" for Polaris HPC, "docker" for local Docker.
-
-    Returns:
-        Dictionary with relaxed structure, energy, stress, final lattice constants
-    
-    Examples:
-        qe_run_vc_relax(structure="Au")  # Find gold's equilibrium lattice constant
-        qe_run_vc_relax(structure="Si", press_conv_thr=0.1)  # Tight pressure convergence
+    Relax atomic positions and cell parameters.
+    Use for equilibrium lattice constants or bulk cell optimization. Only
+    structure is required; optional thresholds and runner override defaults.
     """
     return run_vc_relax(
         structure=structure,
@@ -245,31 +184,9 @@ def qe_workflow_bandstructure(
     runner: str | None = None,
 ) -> dict:
     """
-    Complete band structure calculation workflow.
-
-    Performs: SCF -> NSCF along k-path -> bands.x
-    Automatically determines high-symmetry k-path based on crystal symmetry.
-    
-    Use this to answer: "Is X a metal or semiconductor?" or "What is the band gap?"
-
-    Args:
-        structure: Atomic structure - formula ("Si", "GaAs", "Fe"), file path, or CIF/POSCAR
-        kpoints: K-point grid for SCF. Options: "auto" (default), "gamma", "8,8,8"
-        ecutwfc: Plane-wave cutoff in Ry (auto-detected if not set)
-        nbnd: Number of bands to calculate. Default is 8 per atom. Increase for more 
-              conduction bands (e.g., optical properties) or decrease for faster calculation.
-        npoints_band: Number of k-points along the band path (default: 100). Use 200+ for 
-                      publication-quality smooth bands.
-        spin_polarized: Enable spin polarization (auto-enabled for Fe, Co, Ni, Mn, Cr)
-        runner: Compute backend. "polaris" or "globus" for Polaris HPC, "docker" for local Docker.
-
-    Returns:
-        Dictionary with band_gap_eV, is_metal, vbm_eV, cbm_eV, bands_file
-    
-    Examples:
-        qe_workflow_bandstructure(structure="Si")   # Default (100 k-points, 16 bands)
-        qe_workflow_bandstructure(structure="Si", nbnd=20, npoints_band=200)  # Smooth, more bands
-        qe_workflow_bandstructure(structure="GaAs", nbnd=30)  # Many bands for optics
+    Run SCF -> NSCF along a symmetry k-path -> bands.x.
+    Returns band-gap metadata and output paths or an async job_id. For plots,
+    use qe_read_bands and generate Python matplotlib only, never JavaScript.
     """
     return workflow_bandstructure(
         structure=structure,
@@ -297,28 +214,9 @@ def qe_workflow_dos(
     runner: str | None = None,
 ) -> dict:
     """
-    Complete density of states (DOS) workflow.
-
-    Performs: SCF -> NSCF (dense k-grid) -> dos.x
-    Use for analyzing electronic structure and d-band centers.
-
-    Args:
-        structure: Atomic structure - formula ("Cu", "TiO2"), file path, or CIF/POSCAR
-        kpoints: K-point grid for SCF. Options: "auto" (default), "gamma", "8,8,8"
-        ecutwfc: Plane-wave cutoff in Ry (auto-detected if not set)
-        emin: Minimum energy for DOS in eV relative to Fermi (default: -20)
-        emax: Maximum energy for DOS in eV relative to Fermi (default: 20)
-        deltae: Energy step for DOS in eV (default: 0.01). Smaller = smoother.
-        spin_polarized: Enable spin polarization (auto-enabled for Fe, Co, Ni, Mn, Cr)
-        runner: Compute backend. "polaris" or "globus" for Polaris HPC, "docker" for local Docker.
-
-    Returns:
-        Dictionary with dos_file path, fermi_energy_eV, energy_points
-    
-    Examples:
-        qe_workflow_dos(structure="Cu")   # DOS of copper
-        qe_workflow_dos(structure="Fe", emin=-10, emax=5)  # Focus on d-band
-        qe_workflow_dos(structure="Si", deltae=0.005)  # Very smooth DOS
+    Run SCF -> dense NSCF -> dos.x.
+    Returns DOS output paths or an async job_id. For plots, use qe_read_dos
+    and generate Python matplotlib only, never JavaScript.
     """
     return workflow_dos(
         structure=structure,
@@ -344,23 +242,8 @@ def qe_workflow_relax_and_scf(
     runner: str | None = None,
 ) -> dict:
     """
-    Relax structure then compute accurate total energy.
-
-    Performs relaxation followed by high-accuracy SCF for final energy.
-
-    Args:
-        structure: Atomic structure - formula ("H2O"), file path, or CIF/POSCAR
-        kpoints: K-point grid. Options: "auto" (default), "gamma", "8,8,8"
-        variable_cell: If True, also optimize the unit cell (default: False)
-        spin_polarized: Enable spin polarization (auto-enabled for Fe, Co, Ni, Mn, Cr)
-        runner: Compute backend. "polaris" or "globus" for Polaris HPC, "docker" for local Docker.
-
-    Returns:
-        Dictionary with relaxation info and final SCF energy
-    
-    Examples:
-        qe_workflow_relax_and_scf(structure="H2O")  # Optimize water
-        qe_workflow_relax_and_scf(structure="Cu", variable_cell=True)  # Full optimization
+    Relax a structure, then run a final SCF for accurate total energy.
+    Set variable_cell=true to optimize lattice vectors as well as atoms.
     """
     return workflow_relax_and_scf(
         structure=structure,
@@ -382,27 +265,8 @@ def qe_workflow_relax_and_scf(
 @mcp.tool()
 def qe_load_structure(structure: str) -> dict:
     """
-    Load and inspect an atomic structure.
-
-    Supports many input formats:
-    - File paths: .cif, .vasp, .poscar, .xyz, .extxyz, .pdb, .xsf
-    - Formulas: "Si", "Cu", "GaAs", "NaCl"
-    - 2D materials: "graphene", "hBN", "MoS2", "WS2", "phosphorene"
-    - Perovskites: "SrTiO3", "BaTiO3", "LaMnO3"
-    - Materials Project IDs: "mp-149" (requires MP_API_KEY)
-    - Inline XYZ: "xyz:C 0 0 0; C 1.42 0 0|lattice:2.46,0,0,0,4.26,0,0,0,15"
-    - Structure data as string (CIF, POSCAR, XYZ content)
-
-    Args:
-        structure: Structure specification (see formats above)
-
-    Returns:
-        Dictionary with formula, n_atoms, cell, positions, volume
-    
-    Examples:
-        qe_load_structure("graphene")     # Built-in 2D graphene
-        qe_load_structure("mp-149")       # Silicon from Materials Project
-        qe_load_structure("/path/to/struct.cif")
+    Load a formula, file path, Materials Project ID, inline XYZ, or structure
+    text and return formula, atoms, cell, positions, volume, and PBC metadata.
     """
     return load_structure_tool(structure)
 
@@ -413,27 +277,9 @@ def qe_search_materials_project(
     num_results: int = 10,
 ) -> dict:
     """
-    Search Materials Project database for structures.
-    
-    Requires MP_API_KEY environment variable.
-    Get your API key at: https://materialsproject.org/api
-    
-    Args:
-        query: Search query. Examples:
-            - Formula: "Si", "Fe2O3", "LiFePO4"
-            - Elements: "Fe-O" (materials with Fe AND O)
-            - Chemical system: "Li-Fe-P-O" (all materials in that space)
-        num_results: Maximum number of results (default: 10)
-    
-    Returns:
-        Dictionary with:
-        - results: List of materials with mp_id, formula, band_gap, etc.
-        - hint: How to load a structure using the mp_id
-    
-    Examples:
-        qe_search_materials_project("GaN")        # Find GaN structures
-        qe_search_materials_project("Li-Fe-O")    # Lithium iron oxides
-        qe_search_materials_project("perovskite") # Search by name
+    Search Materials Project by formula or chemical system.
+    Requires MP_API_KEY. Use qe_get_mp_structure or qe_load_structure with
+    the returned material_id to load a result.
     """
     return search_materials_project(query, num_results=num_results)
 
@@ -441,20 +287,8 @@ def qe_search_materials_project(
 @mcp.tool()
 def qe_get_mp_structure(mp_id: str) -> dict:
     """
-    Get structure from Materials Project by material ID.
-    
-    Requires MP_API_KEY environment variable.
-    
-    Args:
-        mp_id: Materials Project ID (e.g., "mp-149" for silicon)
-    
-    Returns:
-        Dictionary with structure information (cell, positions, formula)
-    
-    Examples:
-        qe_get_mp_structure("mp-149")     # Silicon
-        qe_get_mp_structure("mp-19017")   # Fe2O3
-        qe_get_mp_structure("mp-13")      # Fe (BCC)
+    Load a Materials Project structure by ID, e.g. "mp-149".
+    Requires MP_API_KEY and returns the same structure metadata as qe_load_structure.
     """
     return get_mp_structure(mp_id)
 
@@ -462,16 +296,8 @@ def qe_get_mp_structure(mp_id: str) -> dict:
 @mcp.tool()
 def qe_get_kpath(structure: str, npoints: int = 100) -> dict:
     """
-    Get high-symmetry k-path for band structure.
-
-    Automatically determines path based on crystal symmetry.
-
-    Args:
-        structure: Atomic structure
-        npoints: Number of k-points along path
-
-    Returns:
-        Dictionary with kpoints, special_points labels, path string
+    Return a symmetry-derived band-structure k-path for a structure.
+    Includes k-points, special point labels, and a path label string.
     """
     return get_kpath_tool(structure, npoints)
 
@@ -483,21 +309,8 @@ def qe_suggest_kpoints(
     kspacing: float | None = None,
 ) -> dict:
     """
-    Suggest k-point grid for a structure based on cell size.
-    
-    Uses odd numbers (3, 5, 7, 9, 11, ...) for gamma-centered grids.
-    Automatically scales: smaller cells get denser k-grids.
-
-    Args:
-        structure: Atomic structure
-        density: Preset density level:
-            - "low": Quick tests (~25/cell_length)
-            - "medium": Production quality (~40/cell_length)
-            - "high": High accuracy (~60/cell_length)
-        kspacing: Optional explicit spacing in 1/Angstrom (overrides density)
-
-    Returns:
-        Dictionary with suggested kpoints grid and cell info
+    Suggest an automatic k-point grid from cell size.
+    density is "low", "medium", or "high"; kspacing overrides density.
     """
     return suggest_kpoints(structure, density=density, kspacing=kspacing)
 
@@ -505,10 +318,7 @@ def qe_suggest_kpoints(
 @mcp.tool()
 def qe_list_pseudopotentials() -> dict:
     """
-    List available SG15 ONCV pseudopotentials.
-
-    Returns:
-        Dictionary with elements list and recommended cutoffs
+    List available SG15 ONCV pseudopotentials and cutoff hints.
     """
     return list_pseudopotentials()
 
@@ -516,15 +326,8 @@ def qe_list_pseudopotentials() -> dict:
 @mcp.tool()
 def qe_validate_structure(structure: str) -> dict:
     """
-    Validate structure and check for issues.
-
-    Checks pseudopotential availability, atom distances, cell size.
-
-    Args:
-        structure: Structure to validate
-
-    Returns:
-        Dictionary with validation results, warnings, recommendations
+    Validate loadability, pseudopotentials, atom distances, and cell volume.
+    Returns errors, warnings, and recommended cutoffs/k-points.
     """
     return validate_structure(structure)
 
@@ -532,10 +335,7 @@ def qe_validate_structure(structure: str) -> dict:
 @mcp.tool()
 def qe_status() -> dict:
     """
-    Get QE MCP server status.
-
-    Returns:
-        Dictionary with runner status, pseudopotentials, configuration
+    Return runner availability, pseudopotential status, and active config.
     """
     return get_system_status()
 
@@ -543,27 +343,9 @@ def qe_status() -> dict:
 @mcp.tool()
 def qe_get_job_status(job_id: str) -> dict:
     """
-    Check the status of a previously submitted async job.
-
-    Use this after any tool returns {"status": "submitted", "job_id": "..."}.
-    For multi-step workflows (band structure, DOS, relax+SCF) this also
-    advances to the next step when the current one finishes.
-
-    IMPORTANT — if the result is "pending":
-      Do NOT call this tool again immediately.
-      Tell the user:
-        "Your job is queued on Polaris. Make sure `qe-watch` is running in a
-         terminal (`uv run qe-watch`). You'll get a desktop notification when
-         it's done — then say 'check my job' and I'll fetch the results."
-      Then stop. Do not poll in a loop.
-
-    Args:
-        job_id: The job ID returned by the submission tool
-                (e.g. 'bands_a1b2c3d4' or 'scf_xyz12345')
-
-    Returns:
-        Dict with 'status': 'pending' | 'advancing' | 'completed' | 'failed'
-        When completed, all the same fields as the original tool are included.
+    Check an async job_id returned by Polaris/Globus submissions.
+    May advance multi-step workflows. If pending, do not poll rapidly; use
+    qe-watch or check again later.
     """
     return get_job_status(job_id)
 
@@ -576,26 +358,8 @@ def qe_get_job_status(job_id: str) -> dict:
 @mcp.tool()
 def qe_read_bands(output_dir: str) -> dict:
     """
-    Read band structure data from a calculation directory.
-    
-    Reads the .gnu file (bands.dat.gnu) and returns data ready for plotting.
-    Use this to get the raw band structure data after running qe_workflow_bandstructure.
-
-    Args:
-        output_dir: Path to the calculation output directory
-
-    Returns:
-        Dictionary with:
-            - k_distances: List of k-point distances along path
-            - energies: List of lists, one per band
-            - n_bands: Number of bands
-            - n_kpoints: Number of k-points
-    
-    Example:
-        bands = qe_read_bands("/path/to/bands_calculation")
-        # Then plot with matplotlib:
-        # for band in bands["energies"]:
-        #     plt.plot(bands["k_distances"], band)
+    Read bands.dat.gnu into k_distances and per-band energies.
+    Plot with Python matplotlib only; never use JavaScript or browser plotting.
     """
     return read_bands_gnu(output_dir)
 
@@ -603,25 +367,8 @@ def qe_read_bands(output_dir: str) -> dict:
 @mcp.tool()
 def qe_read_dos(output_dir: str) -> dict:
     """
-    Read DOS data from a calculation directory.
-    
-    Reads the .dat file (prefix.dos or prefix.dos.dat) and returns data for plotting.
-    Use this to get the raw DOS data after running qe_workflow_dos.
-
-    Args:
-        output_dir: Path to the calculation output directory
-
-    Returns:
-        Dictionary with:
-            - energies: List of energy values (eV)
-            - dos: Density of states values
-            - integrated_dos: Integrated DOS values
-            - n_points: Number of energy points
-    
-    Example:
-        dos = qe_read_dos("/path/to/dos_calculation")
-        # Then plot with matplotlib:
-        # plt.plot(dos["energies"], dos["dos"])
+    Read total DOS data into energies, dos, and integrated_dos arrays.
+    Plot with Python matplotlib only; never use JavaScript or browser plotting.
     """
     return read_dos_dat(output_dir)
 
@@ -629,24 +376,8 @@ def qe_read_dos(output_dir: str) -> dict:
 @mcp.tool()
 def qe_read_pdos(pdos_file: str) -> dict:
     """
-    Read PDOS (projected DOS) data from a specific file.
-    
-    Reads a PDOS file (e.g., prefix.pdos_atm#1(Fe)_wfc#1(d)) for orbital-resolved plotting.
-
-    Args:
-        pdos_file: Path to the specific PDOS file
-
-    Returns:
-        Dictionary with:
-            - energies: List of energy values (eV)
-            - ldos: Local DOS values
-            - pdos: Projected DOS per orbital
-            - orbitals: List of orbital names
-    
-    Example:
-        pdos = qe_read_pdos("/path/to/prefix.pdos_atm#1(Fe)_wfc#1(d)")
-        # Plot d-band:
-        # plt.plot(pdos["energies"], pdos["pdos"]["dz2"])
+    Read one projected DOS file into energies, local DOS, orbitals, and PDOS.
+    Plot with Python matplotlib only; never use JavaScript or browser plotting.
     """
     return read_pdos_dat(pdos_file)
 
@@ -654,19 +385,8 @@ def qe_read_pdos(pdos_file: str) -> dict:
 @mcp.tool()
 def qe_list_files(output_dir: str) -> dict:
     """
-    List available output files in a calculation directory.
-    
-    Use this to find what files are available for reading/plotting.
-
-    Args:
-        output_dir: Path to the calculation output directory
-
-    Returns:
-        Dictionary with:
-            - bands_files: List of .gnu band structure files
-            - dos_files: List of DOS .dat files
-            - pdos_files: List of PDOS files
-            - output_files: List of .out log files
+    List bands, DOS, PDOS, and .out files in a calculation directory.
+    Use before qe_read_bands, qe_read_dos, or qe_read_pdos.
     """
     return list_calculation_files(output_dir)
 
