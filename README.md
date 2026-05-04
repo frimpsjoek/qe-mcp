@@ -44,6 +44,60 @@ uv sync
 uv run qe-mcp
 ```
 
+## Install in Any MCP Harness
+
+Any MCP client or harness that supports a stdio server can run QE-MCP with the same command:
+
+```bash
+uv --directory /absolute/path/to/qe-mcp run qe-mcp
+```
+
+Use this generic MCP server definition and adjust only the absolute paths and environment values:
+
+```json
+{
+  "name": "quantum-espresso",
+  "command": "uv",
+  "args": ["--directory", "/absolute/path/to/qe-mcp", "run", "qe-mcp"],
+  "env": {
+    "QE_RUNNER": "docker",
+    "QE_USE_DOCKER": "true",
+    "QE_DOCKER_IMAGE": "qe-local",
+    "QE_PSEUDO_DIR": "/absolute/path/to/qe-mcp/pseudopotentials/sg15_oncv",
+    "QE_WORKDIR": "/absolute/path/to/qe-mcp/qe_calculations"
+  }
+}
+```
+
+Most harnesses use the same fields with slightly different wrappers:
+
+- Claude Desktop uses `mcpServers.<server-name>`.
+- Cursor and Windsurf use an MCP server entry with `command`, `args`, and `env`.
+- Cline/Roo Code use a server object in their MCP settings.
+- Codex or other harnesses can launch the same stdio command directly.
+
+For Docker-backed local runs, build the image first:
+
+```bash
+docker build -t qe-local /absolute/path/to/qe-mcp
+```
+
+For Polaris-backed runs, use the same server command but change the env block:
+
+```json
+{
+  "QE_RUNNER": "globus",
+  "QE_GLOBUS_ENDPOINT": "<your-polaris-compute-endpoint-uuid>",
+  "QE_GLOBUS_FUNCTION": "<registered-worker-function-uuid>",
+  "QE_POLARIS_SCRATCH": "~/.qe_mcp_scratch",
+  "QE_POLARIS_PSEUDO": "/home/<you>/sg15_oncv",
+  "QE_PSEUDO_DIR": "/absolute/path/to/qe-mcp/pseudopotentials/sg15_oncv",
+  "QE_WORKDIR": "/absolute/path/to/qe-mcp/qe_calculations"
+}
+```
+
+After adding the server to a harness, restart the harness and call `qe_status`. A healthy local Docker setup reports the Docker runner as available; a healthy Polaris setup reports the Globus endpoint as online.
+
 ## Configuration
 
 QE-MCP supports two execution modes:
