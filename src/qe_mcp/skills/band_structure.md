@@ -11,6 +11,12 @@ arguments:
 ---
 You are running a complete electronic band structure calculation for **{material}**.
 
+## Response discipline
+- Do not reveal scratch reasoning or narrate index-by-index k-point analysis unless the user explicitly asks for that diagnostic walkthrough.
+- Do not infer high-symmetry labels from eigenvalue degeneracies. Use labels/path metadata from `qe_get_kpath` or workflow outputs only.
+- If exact tick labels/positions are unavailable, say so briefly and plot against numeric k-distance with known discontinuities marked.
+- Keep user-facing responses to concise status, final results, and the matplotlib script unless the user explicitly asks for a detailed explanation.
+
 ## Step 1 — Pre-flight checks
 - Call `qe_list_pseudopotentials` and confirm pseudopotentials exist for every element in `{material}`. If any element is missing, stop and report it.
 - Call `qe_validate_structure(structure="{material}")` and confirm no structural issues. Fix any warnings before proceeding.
@@ -45,10 +51,11 @@ Do **not** poll repeatedly in the same response. Tell the user the job was submi
 Consult `qe://llm/materials` for experimental reference values if the material is in the database.
 
 ## Step 6 — Plotting code
-Output a complete, ready-to-run **Python matplotlib script** (static, saved to PDF). Never use JavaScript, Plotly, Bokeh, or any interactive library. Do not call `plt.show()`. Follow the conventions in `qe://llm/plotting`:
+Output a complete, ready-to-run **Python matplotlib script** (static, saved to PDF). Never use JavaScript, Plotly, Bokeh, Chart.js, D3, Vega, HTML canvas, or any interactive/browser library unless the user explicitly requests it. Do not call `plt.show()`. Follow the conventions in `qe://llm/plotting`:
 - Figure width: 3.5 in (single column), 300 DPI
 - Energy axis centred at the Fermi level (shift bands by −E_Fermi)
 - Show E_Fermi as a dashed horizontal line
 - Label high-symmetry k-points on the x-axis
+- Use only confirmed labels/positions from tool outputs; do not guess labels from band degeneracies
 - Font: Arial 8 pt, no top/right spines
 - Save as PDF for vector output

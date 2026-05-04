@@ -359,7 +359,8 @@ def qe_get_job_status(job_id: str) -> dict:
 def qe_read_bands(output_dir: str) -> dict:
     """
     Read bands.dat.gnu into k_distances and per-band energies.
-    Plot with Python matplotlib only; never use JavaScript or browser plotting.
+    Plot with Python matplotlib only unless explicitly requested otherwise.
+    Never default to JavaScript, Chart.js, Plotly, HTML canvas, or browser plotting.
     """
     return read_bands_gnu(output_dir)
 
@@ -368,7 +369,8 @@ def qe_read_bands(output_dir: str) -> dict:
 def qe_read_dos(output_dir: str) -> dict:
     """
     Read total DOS data into energies, dos, and integrated_dos arrays.
-    Plot with Python matplotlib only; never use JavaScript or browser plotting.
+    Plot with Python matplotlib only unless explicitly requested otherwise.
+    Never default to JavaScript, Chart.js, Plotly, HTML canvas, or browser plotting.
     """
     return read_dos_dat(output_dir)
 
@@ -377,7 +379,8 @@ def qe_read_dos(output_dir: str) -> dict:
 def qe_read_pdos(pdos_file: str) -> dict:
     """
     Read one projected DOS file into energies, local DOS, orbitals, and PDOS.
-    Plot with Python matplotlib only; never use JavaScript or browser plotting.
+    Plot with Python matplotlib only unless explicitly requested otherwise.
+    Never default to JavaScript, Chart.js, Plotly, HTML canvas, or browser plotting.
     """
     return read_pdos_dat(pdos_file)
 

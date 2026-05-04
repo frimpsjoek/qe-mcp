@@ -75,8 +75,8 @@ def read_bands_gnu(file_path: str) -> dict[str, Any]:
             "raw_data": content,
             "plot_instruction": (
                 "To plot: use k_distances as x-axis, each band as y-values. "
-                "Plot each band as a separate line. "
-                "Example: plt.plot(k_distances, bands[i]) for each band i."
+                "Use Python matplotlib unless the user explicitly requests another format. "
+                "Never default to JavaScript, Chart.js, Plotly, HTML canvas, or browser plotting."
             )
         }
         
@@ -157,8 +157,8 @@ def read_dos_dat(file_path: str) -> dict[str, Any]:
             "raw_data": content,
             "plot_instruction": (
                 "To plot DOS: use energies as x-axis, dos as y-axis. "
-                "Plot as plt.plot(energies, dos). "
-                "Add vertical line at Fermi energy: plt.axvline(fermi_energy)."
+                "Use Python matplotlib unless the user explicitly requests another format. "
+                "Never default to JavaScript, Chart.js, Plotly, HTML canvas, or browser plotting."
             )
         }
         
@@ -230,8 +230,8 @@ def read_pdos_dat(file_path: str) -> dict[str, Any]:
             "raw_data": content,
             "plot_instruction": (
                 "To plot PDOS: use energies as x-axis, ldos as y-axis. "
-                "Stack multiple PDOS files to show orbital contributions. "
-                "Use plt.fill_between for filled area plots."
+                "Use Python matplotlib unless the user explicitly requests another format. "
+                "Never default to JavaScript, Chart.js, Plotly, HTML canvas, or browser plotting."
             )
         }
         

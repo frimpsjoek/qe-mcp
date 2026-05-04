@@ -11,6 +11,11 @@ arguments:
 ---
 You are running a complete density-of-states (DOS + PDOS) calculation for **{material}**.
 
+## Response discipline
+- Do not reveal scratch reasoning unless the user explicitly asks for diagnostic reasoning.
+- Keep user-facing responses to concise status, final results, interpretation, and the matplotlib script unless the user explicitly asks for more detail.
+- Never use JavaScript, Plotly, Bokeh, Chart.js, D3, Vega, HTML canvas, or interactive/browser plotting unless the user explicitly requests it.
+
 ## Step 1 — Auto-detect spin polarization
 Inspect the elements in `{material}`. If it contains any of Fe, Co, Ni, Mn, Cr, V, Gd, Eu, Tb, Dy, Ho, Er, set `spin_polarized=True` automatically (unless the user explicitly set it to False). Report your decision.
 
@@ -49,7 +54,7 @@ Provide physical interpretation tailored to the material type:
 - Compare with `qe://llm/materials` experimental reference if available
 
 ## Step 6 — Plotting code
-Output a complete, ready-to-run **Python matplotlib script** (static, saved to PDF). Never use JavaScript, Plotly, Bokeh, or any interactive library. Do not call `plt.show()`. Follow `qe://llm/plotting`:
+Output a complete, ready-to-run **Python matplotlib script** (static, saved to PDF). Do not call `plt.show()`. Follow `qe://llm/plotting`:
 - DOS orientation: energy on x-axis, DOS on y-axis
 - Apply 0.03 eV Gaussian broadening
 - Vertical dashed line at E_Fermi (shift energy axis so E_Fermi = 0)
