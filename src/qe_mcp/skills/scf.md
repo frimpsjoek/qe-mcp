@@ -18,8 +18,8 @@ Call `qe_run_scf(structure="{material}")`. Smart defaults will handle:
 
 Note the returned `job_id`.
 
-## Step 2 — Async polling
-Call `qe_get_job_status(job_id=<job_id>)` every ~30 seconds until `"completed"` or `"failed"`. On failure read the output and report the error.
+## Step 2 — Async handoff
+If the job is submitted asynchronously, do **not** poll repeatedly in the same response. Tell the user the job was submitted, give the `job_id`, and recommend running `uv run qe-watch` for notifications. Ask them to request a status check later; then call `qe_get_job_status(job_id=<job_id>)` once and continue to Step 3 only if it is completed.
 
 ## Step 3 — Report results
 - **Total energy**: report in both Ry and eV

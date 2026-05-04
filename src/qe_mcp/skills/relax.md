@@ -31,8 +31,8 @@ Report which tool you chose and why.
 ## Step 3 — Launch
 Call the chosen tool with `structure="{structure}"` and let smart defaults handle ecutwfc, k-points, and smearing. Note the returned `job_id`.
 
-## Step 4 — Async polling
-Call `qe_get_job_status(job_id=<job_id>)` every ~30 seconds. Report ionic step count and max force if available in the status. Continue until `"completed"` or `"failed"`.
+## Step 4 — Async handoff
+If the job is submitted asynchronously, do **not** poll repeatedly in the same response. Tell the user the job was submitted, give the `job_id`, and recommend running `uv run qe-watch` for notifications. Ask them to request a status check later; then call `qe_get_job_status(job_id=<job_id>)` once and continue to Step 5 only if it is completed.
 
 ## Step 5 — Report results
 Provide a structured summary:

@@ -1,6 +1,6 @@
 ---
 name: DOS Skill
-description: Action-oriented DOS + PDOS workflow with automatic spin detection, async polling, and orbital/magnetic interpretation.
+description: Action-oriented DOS + PDOS workflow with spin detection, async job handoff, and orbital/magnetic interpretation.
 arguments:
   - name: material
     description: Chemical formula or structure (e.g., 'Cu', 'Fe', 'TiO2')
@@ -23,10 +23,10 @@ qe_workflow_dos(
     kpoints_nscf=[12, 12, 12]
 )
 ```
-Note the returned `job_id`. If async, proceed to Step 3.
+If async, note the returned `job_id` and proceed to Step 3.
 
-## Step 3 — Async polling
-Call `qe_get_job_status(job_id=<job_id>)` every ~30 seconds. Report progress ("SCF running…", "NSCF complete…", "dos.x running…", "projwfc.x running…"). Continue until `"completed"` or `"failed"`.
+## Step 3 — Async handoff
+Do **not** poll repeatedly in the same response. Tell the user the job was submitted, give the `job_id`, and recommend running `uv run qe-watch` for notifications. Ask them to request a status check later; then call `qe_get_job_status(job_id=<job_id>)` once and continue to Step 4 only if it is completed.
 
 ## Step 4 — Read results
 - Call `qe_read_dos(job_id=<job_id>)` for the total DOS

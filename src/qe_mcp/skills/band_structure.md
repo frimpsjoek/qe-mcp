@@ -1,6 +1,6 @@
 ---
 name: Band Structure Skill
-description: Action-oriented band structure workflow with async polling, k-path preview, and electronic structure interpretation.
+description: Action-oriented band structure workflow with k-path preview, async job handoff, and electronic structure interpretation.
 arguments:
   - name: material
     description: Chemical formula or structure (e.g., 'Si', 'GaAs', 'Fe2O3')
@@ -27,10 +27,10 @@ qe_workflow_bandstructure(
     npoints_band={npoints}
 )
 ```
-Note the returned `job_id`. If the runner is async (status = "submitted"), proceed to Step 4. If the result is immediate, skip to Step 5.
+If the runner returns `status="submitted"`, note the returned `job_id` and proceed to Step 4. If the result is immediate, skip to Step 5.
 
-## Step 4 — Async polling
-Call `qe_get_job_status(job_id=<job_id>)` approximately every 30 seconds. Report progress to the user at each check (e.g., "SCF running…", "NSCF complete, running bands.x…"). Continue until `status` is `"completed"` or `"failed"`. On failure, read the output file and report the specific error.
+## Step 4 — Async handoff
+Do **not** poll repeatedly in the same response. Tell the user the job was submitted, give the `job_id`, and recommend running `uv run qe-watch` in a terminal for notifications. Ask them to request a status check later; then call `qe_get_job_status(job_id=<job_id>)` once and continue to Step 5 only if it is completed.
 
 ## Step 5 — Read and interpret results
 - Call `qe_read_bands(job_id=<job_id>)` to retrieve the band data.

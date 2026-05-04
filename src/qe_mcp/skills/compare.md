@@ -17,7 +17,7 @@ Run `qe_run_scf` on each structure using **identical parameters**:
 - `kpoints` appropriate for each cell size (use `qe_suggest_kpoints` for each structure)
 - Same `smearing` type and `degauss`
 
-Launch all SCF jobs; poll each with `qe_get_job_status` until all are complete.
+Launch the SCF jobs. If any are submitted asynchronously, do **not** poll repeatedly in the same response. Return the submitted `job_id` values, recommend `uv run qe-watch`, and ask the user to request a later status check. Continue only when all jobs are completed.
 
 ## Step 3 — Build comparison table
 | Structure | E_total (eV) | N atoms | E/atom (eV) | Volume/atom (Å³) | Density (g/cm³) |

@@ -19,7 +19,7 @@ qe_run_scf(
     spin_polarized=True
 )
 ```
-Poll `qe_get_job_status` until complete. Record:
+If the SCF is submitted asynchronously, do **not** poll repeatedly in the same response. Return the `job_id`, recommend `uv run qe-watch`, and continue only after the user requests a later status check and the job is completed. Record:
 - `E_FM` (total energy, eV)
 - `total_magnetization` (μB per unit cell)
 - `absolute_magnetization` (μB per unit cell)
@@ -29,7 +29,7 @@ Poll `qe_get_job_status` until complete. Record:
 If the structure contains ≥2 inequivalent magnetic sites (e.g., two Fe sublattices in MnO or Fe2O3):
 - Describe to the user how to set alternating starting_magnetization values to initialise the AFM state
 - Run a second `qe_run_scf` with the alternating spin initialisation
-- Poll until complete. Record `E_AFM`.
+- If submitted asynchronously, return the `job_id` and wait for a later status check. Record `E_AFM` only after completion.
 
 If only one magnetic sublattice exists, skip this step and explain why.
 
@@ -49,7 +49,7 @@ qe_workflow_dos(
     kpoints_nscf=[12, 12, 12]
 )
 ```
-Poll until complete, then call `qe_read_dos` and `qe_read_pdos`.
+If submitted asynchronously, return the `job_id` and wait for a later status check. After completion, call `qe_read_dos` and `qe_read_pdos`.
 
 ## Step 5 — Report
 - **Magnetic moment per atom** (μB) — compare with experimental values from `qe://llm/materials`

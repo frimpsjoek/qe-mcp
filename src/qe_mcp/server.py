@@ -586,7 +586,7 @@ def compare_structures(structures: str) -> str:
 def skill_band_structure(material: str, accuracy: str = "medium") -> str:
     """
     Action-oriented band structure skill: validates structure, previews k-path,
-    runs the full workflow with async polling, and returns interpreted results
+    runs the full workflow with async handoff, and returns interpreted results
     plus publication-quality plotting code.
 
     Args:
@@ -601,7 +601,7 @@ def skill_band_structure(material: str, accuracy: str = "medium") -> str:
 def skill_dos(material: str, spin_polarized: bool = False) -> str:
     """
     Action-oriented DOS + PDOS skill: auto-detects magnetic elements, runs the
-    full workflow with async polling, and returns orbital/exchange-splitting
+    full workflow with async handoff, and returns orbital/exchange-splitting
     interpretation plus plotting code.
 
     Args:
@@ -616,7 +616,7 @@ def skill_dos(material: str, spin_polarized: bool = False) -> str:
 def skill_relax(structure: str, optimize_cell: bool = False) -> str:
     """
     Smart geometry optimization skill: auto-selects relax vs vc-relax based on
-    system type (bulk crystal / slab / molecule), polls async, and reports full
+    system type (bulk crystal / slab / molecule), handles async jobs, and reports full
     structural change summary.
 
     Args:
@@ -630,7 +630,7 @@ def skill_relax(structure: str, optimize_cell: bool = False) -> str:
 @mcp.prompt()
 def skill_scf(material: str) -> str:
     """
-    Quick single-point SCF skill: runs with smart defaults, polls async, and
+    Quick single-point SCF skill: runs with smart defaults, handles async jobs, and
     reports energy, Fermi level, and magnetization.
 
     Args:
