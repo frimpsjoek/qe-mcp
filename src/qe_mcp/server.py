@@ -471,6 +471,12 @@ def resource_plotting_guide() -> str:
     return get_resource("qe://llm/plotting")["text"]
 
 
+@mcp.resource("qe://llm/pre-calculation-guide")
+def resource_pre_calculation_guide() -> str:
+    """Pre-calculation triage guide — when to ask, when to default, what to confirm."""
+    return get_resource("qe://llm/pre-calculation-guide")["text"]
+
+
 # =============================================================================
 # Prompts - Pre-built Templates
 # =============================================================================
