@@ -1,0 +1,27 @@
+display_name: qe-polaris-1
+
+engine:
+  type: GlobusComputeEngine
+
+  provider:
+    type: PBSProProvider
+    account: LitMinMatSci
+    queue: debug
+    walltime: "00:30:00"
+    nodes_per_block: 1
+    init_blocks: 0
+    min_blocks: 0
+    max_blocks: 2
+    select_options: "system=polaris"
+    scheduler_options: "#PBS -l filesystems=home:eagle"
+
+    worker_init: |
+      module load PrgEnv-nvhpc nvhpc
+      module load cray-hdf5
+      module load cray-fftw
+      export LD_LIBRARY_PATH=/soft/compilers/nvhpc/Linux_x86_64/24.11/compilers/lib:/soft/compilers/nvhpc/Linux_x86_64/24.11/math_libs/lib64:/soft/compilers/nvhpc/Linux_x86_64/24.11/cuda/lib64:$LD_LIBRARY_PATH
+      export MPICH_GPU_SUPPORT_ENABLED=0
+      export OMP_NUM_THREADS=8
+      export OMP_PLACES=threads
+
+  max_workers_per_node: 1

@@ -1,0 +1,23 @@
+# Ignore environment variables file
+.env
+
+# Ignore Python cache and environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+list/
+
+# Ignore calculation outputs
+qe_calculations/
+test_calc/tmp/
+
+# Ignore local editor/agent settings
+.claude/
+.vscode/
+
+# Ignore Mac specific files
+.DS_Store
