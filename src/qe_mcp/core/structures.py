@@ -38,6 +38,8 @@ def load_structure(structure: str | Path | Atoms) -> Atoms:
                 - "H2O" -> water molecule
             - Materials Project ID: "mp-149" (requires MP_API_KEY)
             - XYZ + lattice: "xyz:C 0 0 0; C 1.42 0 0|lattice:2.46,0,0,0,4.26,0,0,0,15"
+            - Natural text: "Si bulk diamond cubic a = 5.43 angstrom"
+              or "cubic cell a=5.43; fractional coordinates: Si 0 0 0; Si 0.25 0.25 0.25"
 
     Returns:
         ASE Atoms object
@@ -57,6 +59,10 @@ def load_structure(structure: str | Path | Atoms) -> Atoms:
         # Check for inline XYZ + lattice format
         if "xyz:" in structure.lower() or "|lattice:" in structure.lower():
             return _parse_inline_structure(structure)
+
+        atoms = _parse_natural_language_structure(structure)
+        if atoms is not None:
+            return atoms
         
         path = Path(structure)
         if path.exists() and path.is_file():
@@ -99,6 +105,132 @@ def load_structure(structure: str | Path | Atoms) -> Atoms:
         )
 
     raise TypeError(f"Expected str, Path, or Atoms, got {type(structure)}")
+
+
+def _parse_natural_language_structure(structure: str) -> Optional[Atoms]:
+    """
+    Parse compact natural-language structure descriptions.
+
+    This intentionally handles only low-ambiguity cases. Ambiguous free text
+    should still fail loudly rather than silently creating the wrong structure.
+    """
+    text = structure.strip()
+    lower = text.lower()
+    if not text or "\n" not in text and not any(
+        token in lower for token in (
+            "bulk", "cubic", "lattice", "angstrom", "fractional", "crystal",
+            "diamond", "fcc", "bcc", "hcp", "rocksalt", "rock salt",
+            "zincblende", "zinc blende", " a=", " a =", "cell",
+        )
+    ):
+        return None
+
+    formula = _extract_formula(text)
+    a = _extract_lattice_constant(text, "a")
+    b = _extract_lattice_constant(text, "b")
+    c = _extract_lattice_constant(text, "c")
+
+    structure_type = _infer_structure_type(lower)
+    if formula and structure_type:
+        try:
+            if structure_type == "hcp":
+                c_over_a = (c / a) if (a and c) else None
+                return bulk(formula, structure_type, a=a, c=a * c_over_a) if c_over_a else bulk(formula, structure_type, a=a)
+            if a:
+                return bulk(formula, structure_type, a=a)
+            return bulk(formula, structure_type)
+        except Exception:
+            pass
+
+    atoms_data = _extract_atom_coordinate_lines(text)
+    if atoms_data and (a or b or c or "lattice" in lower or "cell" in lower):
+        a = a or b or c
+        b = b or a
+        c = c or a
+        if not (a and b and c):
+            return None
+        cell = np.diag([a, b, c])
+        symbols = [item[0] for item in atoms_data]
+        coords = np.array([item[1] for item in atoms_data], dtype=float)
+        coord_mode = _infer_coordinate_mode(lower, coords)
+        if coord_mode == "fractional":
+            atoms = Atoms(symbols=symbols, scaled_positions=coords, cell=cell, pbc=True)
+        else:
+            atoms = Atoms(symbols=symbols, positions=coords, cell=cell, pbc=True)
+        return atoms
+
+    return None
+
+
+def _extract_formula(text: str) -> str | None:
+    """Return the first plausible chemical formula in free text."""
+    skip = {
+        "bulk", "diamond", "cubic", "cell", "lattice", "angstrom", "ang", "crystal",
+        "fractional", "cartesian", "coordinates", "coord", "structure", "with",
+    }
+    for token in re.findall(r"\b[A-Z][a-z]?(?:\d+)?(?:[A-Z][a-z]?\d*)*\b", text):
+        if token.lower() not in skip:
+            return token
+    return None
+
+
+def _extract_lattice_constant(text: str, name: str) -> float | None:
+    """Extract lattice constants like a=5.43 or a = 5.43 angstrom."""
+    match = re.search(
+        rf"\b{name}\s*(?:=|:|is)?\s*([-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)",
+        text,
+        re.IGNORECASE,
+    )
+    return float(match.group(1)) if match else None
+
+
+def _infer_structure_type(lower: str) -> str | None:
+    """Map common natural-language crystal names to ASE bulk crystal structures."""
+    if "diamond" in lower:
+        return "diamond"
+    if "zinc blende" in lower or "zincblende" in lower or "sphalerite" in lower:
+        return "zincblende"
+    if "rock salt" in lower or "rocksalt" in lower or "nacl" in lower:
+        return "rocksalt"
+    if "body centered" in lower or "body-centred" in lower or "bcc" in lower:
+        return "bcc"
+    if "face centered" in lower or "face-centred" in lower or "fcc" in lower:
+        return "fcc"
+    if "hexagonal close" in lower or "hcp" in lower:
+        return "hcp"
+    if "simple cubic" in lower or " sc " in f" {lower} ":
+        return "sc"
+    return None
+
+
+def _extract_atom_coordinate_lines(text: str) -> list[tuple[str, list[float]]]:
+    """Extract lines like 'Si 0.0 0.0 0.0' from free text."""
+    atoms_data: list[tuple[str, list[float]]] = []
+    for raw_line in re.split(r"[\n;]+", text):
+        line = raw_line.strip()
+        match = re.match(
+            r"^([A-Z][a-z]?)\s+([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s+"
+            r"([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s+"
+            r"([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\b",
+            line,
+        )
+        if match:
+            atoms_data.append((
+                match.group(1),
+                [float(match.group(2)), float(match.group(3)), float(match.group(4))],
+            ))
+    return atoms_data
+
+
+def _infer_coordinate_mode(lower: str, coords: np.ndarray) -> str:
+    """Infer fractional vs Cartesian coordinates for natural-language blocks."""
+    if any(word in lower for word in ("fractional", "frac", "crystal", "scaled", "direct")):
+        return "fractional"
+    if any(word in lower for word in ("cartesian", "cart", "angstrom positions", "xyz")):
+        return "cartesian"
+    if coords.size and np.all(coords >= -1e-12) and np.all(coords <= 1.0 + 1e-12):
+        return "fractional"
+    return "cartesian"
 
 
 def _parse_structure_string(structure: str) -> Optional[Atoms]:

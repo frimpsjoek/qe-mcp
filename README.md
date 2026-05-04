@@ -380,6 +380,17 @@ Calculate the band structure of silicon
 
 The LLM will call `qe_workflow_bandstructure` with `structure="Si"` and return the band gap, VBM, CBM, and other results.
 
+Natural-language structure descriptions are also accepted for common unambiguous cases. For example:
+
+```text
+Si bulk diamond cubic
+a = 5.43 angstrom
+Si 0.00 0.00 0.00
+Si 0.25 0.25 0.25
+```
+
+QE-MCP converts this to an ASE `Atoms` object before generating QE input. It also accepts compact forms such as `Cu bulk fcc a=3.615 angstrom`, `Fe bcc a=2.87 A`, and coordinate blocks with a cubic cell plus fractional or Cartesian coordinates.
+
 ## License
 
 MIT
